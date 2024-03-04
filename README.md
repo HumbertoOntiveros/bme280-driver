@@ -6,7 +6,7 @@ Its small dimensions and its low power consumption allow the implementation in b
 handsets, GPS modules or watches.
 
 ### Key features
-  -humidity, pressure and temperature abailable trought SYSFS.
-  -used interface : SPI.
-  -configuration trought DTB.
-  -characteristic files abailables in sysfs for each physic magnitud. 
+  - humidity, pressure and temperature abailable trought SYSFS.
+  - used interface : SPI.
+  - configuration trought DTB.
+  - characteristic files abailables in sysfs for each physic magnitud. 
