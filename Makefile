@@ -1,4 +1,4 @@
-obj-m := bm280.o
+obj-m := bme280.o
 ARCH=arm
 CROSS_COMPILE=arm-linux-gnueabihf-
 KERN_DIR =  /home/humberto/EmbeddedLinux/linux_bbb_5.4/
