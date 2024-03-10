@@ -1,4 +1,7 @@
-obj-m := bme280.o
+obj-m := bme280drv.o
+
+bme280drv-objs += bme280.o BME280_SensorAPI/bme280.o BME280_SensorAPI/common/common.o
+
 ARCH=arm
 CROSS_COMPILE=arm-linux-gnueabihf-
 KERN_DIR =  /home/humberto/EmbeddedLinux/linux_bbb_5.4/
