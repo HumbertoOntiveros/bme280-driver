@@ -425,7 +425,7 @@ int8_t bme280_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct
         }
 
         /* Read the data */
-        dev->intf_rslt = dev->read(reg_addr, reg_data, len, dev->intf_ptr);
+        dev->intf_rslt = dev->read(reg_addr, reg_data, len, dev->intf_ptr, dev->spi_dev);
 
         /* Check for communication error */
         if (dev->intf_rslt != BME280_INTF_RET_SUCCESS)
@@ -490,7 +490,7 @@ int8_t bme280_set_regs(uint8_t *reg_addr, const uint8_t *reg_data, uint32_t len,
                 temp_len = len;
             }
 
-            dev->intf_rslt = dev->write(reg_addr[0], temp_buff, temp_len, dev->intf_ptr);
+            dev->intf_rslt = dev->write(reg_addr[0], temp_buff, temp_len, dev->intf_ptr, dev->spi_dev);
 
             /* Check for communication error */
             if (dev->intf_rslt != BME280_INTF_RET_SUCCESS)

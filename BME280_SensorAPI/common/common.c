@@ -4,14 +4,10 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-//#include <stdint.h>
-//#include <stdlib.h>
-//#include <stdio.h>
-
-//#include "coines.h"
 #include "../bme280.h"
 #include "common.h"
 #include <linux/delay.h>
+#include <linux/spi/spi.h>
 
 /******************************************************************************/
 /*!                               Macros                                      */
@@ -30,49 +26,89 @@ static uint8_t dev_addr;
 /*!
  * I2C read function map to COINES platform
  */
-BME280_INTF_RET_TYPE bme280_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t length, void *intf_ptr)
+BME280_INTF_RET_TYPE bme280_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t length, void *intf_ptr, struct spi_device *spi_dev)
 {
-   // dev_addr = *(uint8_t*)intf_ptr;
-
-   // return coines_read_i2c(COINES_I2C_BUS_0, dev_addr, reg_addr, reg_data, (uint16_t)length);
 	return 0;
 }
 
 /*!
  * I2C write function map to COINES platform
  */
-BME280_INTF_RET_TYPE bme280_i2c_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t length, void *intf_ptr)
+BME280_INTF_RET_TYPE bme280_i2c_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t length, void *intf_ptr, struct spi_device *spi_dev)
 {
-	dev_addr = *(uint8_t*)intf_ptr;
-
-	 //return coines_write_i2c(COINES_I2C_BUS_0, dev_addr, reg_addr, (uint8_t *)reg_data, (uint16_t)length);
-
-	spi_write(struct spi_device *spi, const void *buf, size_t len);
         return 0;
 }
 
 /*!
  * SPI read function map to COINES platform
  */
-BME280_INTF_RET_TYPE bme280_spi_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t length, void *intf_ptr)
+BME280_INTF_RET_TYPE bme280_spi_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t length, void *intf_ptr, struct spi_device *spi_dev)
 {
-	dev_addr = *(uint8_t*)intf_ptr;
+	//dev_addr = *(uint8_t*)intf_ptr;
 
-    //return coines_read_spi(COINES_SPI_BUS_0, dev_addr, reg_addr, reg_data, (uint16_t)length);
+	struct spi_message message;
+	struct spi_transfer transfer;
 
-	spi_read(struct spi_device *spi, void *buf, size_t len);
-        return 0;
+	memset(&transfer, 0, sizeof(struct spi_transfer));
+	transfer.tx_buf = kmalloc(length, GFP_KERNEL);
+	transfer.rx_buf = reg_data;
+	transfer.len = length;
+
+	// Configura el registro de dirección para la lectura
+	*((uint8_t *)transfer.tx_buf) = reg_addr | 0x80;
+
+	spi_message_init(&message);
+	spi_message_add_tail(&transfer, &message);
+
+	if (spi_sync(spi_dev, &message) == 0) {
+		kfree(transfer.tx_buf);
+		return 0;
+	} else {
+		kfree(transfer.tx_buf);
+		return -EIO;
+	}
 }
 
 /*!
  * SPI write function map to COINES platform
  */
-BME280_INTF_RET_TYPE bme280_spi_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t length, void *intf_ptr)
+BME280_INTF_RET_TYPE bme280_spi_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t length, void *intf_ptr, struct spi_device *spi_dev)
 {
-    //dev_addr = *(uint8_t*)intf_ptr;
+	//dev_addr = *(uint8_t*)intf_ptr;
+	int ret;
+	struct spi_message message;
+	struct spi_transfer transfer;
 
-    //return coines_write_spi(COINES_SPI_BUS_0, dev_addr, reg_addr, (uint8_t *)reg_data, (uint16_t)length);
-        return 0;
+	/*
+	*
+	*Assuming that dev_addr is an SPI device, use spi_dev directly
+	*dev_addr = spi_dev->chip_select;
+	*
+	*/
+
+	/* Initialize the spi_transfer structure*/
+	memset(&transfer, 0, sizeof(struct spi_transfer));
+	transfer.tx_buf = kmalloc(length + 1, GFP_KERNEL);  // Allocate memory for reg_addr + reg_data
+	if (!transfer.tx_buf) {
+		return -ENOMEM;  // Memory allocation failure
+	}
+
+	/* Set the register address as the first byte*/
+	*((uint8_t *)transfer.tx_buf) = reg_addr;
+	memcpy((void *)(uintptr_t)(transfer.tx_buf + 1), reg_data, length);  // Copy reg_data after reg_addr
+	transfer.len = length + 1;
+
+	/* Initialize the spi_message structure and add the transfer*/
+	spi_message_init(&message);
+	spi_message_add_tail(&transfer, &message);
+
+	/* Perform the SPI transfer*/
+	ret = spi_sync(spi_dev, &message);
+
+	/* Free allocated memory*/
+	kfree(transfer.tx_buf);
+
+	return ret;
 }
 
 /*!
@@ -80,7 +116,6 @@ BME280_INTF_RET_TYPE bme280_spi_write(uint8_t reg_addr, const uint8_t *reg_data,
  */
 void bme280_delay_us(uint32_t period, void *intf_ptr)
 {
-	//coines_delay_usec(period);
 	udelay(period);
 }
 

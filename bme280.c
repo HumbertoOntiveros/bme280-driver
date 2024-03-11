@@ -18,12 +18,15 @@
 #undef pr_fmt
 #define pr_fmt(fmt) "%s : " fmt,__func__
 
+/*Driver private data structure*/
+struct bme280drv_data
+{
+	int total_devices;
+	struct device **dev;
 
-/*Device private data structure*/
-struct bme280data {
-	char label[20];
-	struct spi_device *spi_dev;
 };
+
+struct bme280drv_data bme280_drv_data;
 
 ssize_t bme280_humidity_show(struct device *dev, struct device_attribute *attr,char *buf)
 {
@@ -72,21 +75,19 @@ int bme280_remove(struct spi_device *spi_dev)
 
 static int bme280_probe(struct spi_device *spi_dev)
 {
-	struct bme280data *bme280_data;
-
 	const char *name;
-	int i = 0;
 	int ret;
-	struct device *hwmon_dev;
 
         int8_t rslt;
-        struct bme280_dev dev;
-
-
+        struct bme280_dev *bme280_data;
 
 	/*parent device node*/
  	struct device_node *parent = spi_dev->dev.of_node;
 
+        bme280_drv_data.total_devices++;
+        dev_info(&spi_dev->dev,"Driver's total devices  = %d\n",bme280_drv_data.total_devices);
+
+	bme280_drv_data.dev = devm_kzalloc(&spi_dev->dev, sizeof(struct device *) * bme280_drv_data.total_devices , GFP_KERNEL);
 
 	bme280_data = devm_kzalloc(&spi_dev->dev, sizeof(*bme280_data), GFP_KERNEL);
 	if(!bme280_data){
@@ -100,7 +101,7 @@ static int bme280_probe(struct spi_device *spi_dev)
 	{
 
 		dev_warn(&spi_dev->dev,"Missing label information\n");
-		snprintf(bme280_data->label, sizeof(bme280_data->label),"unknlabel%d",i);
+		snprintf(bme280_data->label, sizeof(bme280_data->label),"unknlabel%d",bme280_drv_data.total_devices);
 
 	}else{
 
@@ -139,23 +140,27 @@ static int bme280_probe(struct spi_device *spi_dev)
 	* For SPI :  BME280_SPI_INTF
 	*/
 
-	rslt = bme280_interface_selection(&dev, BME280_I2C_INTF);
+	rslt = bme280_interface_selection(bme280_data, BME280_I2C_INTF);
 	bme280_error_codes_print_result("bme280_interface_selection", rslt);
 
-	rslt = bme280_init(&dev);
+	rslt = bme280_init(bme280_data);
 	bme280_error_codes_print_result("bme280_init", rslt);
 
-	hwmon_dev = devm_hwmon_device_register_with_groups(&spi_dev->dev,
-							   spi_dev->modalias,
+	bme280_drv_data.dev[bme280_drv_data.total_devices] = devm_hwmon_device_register_with_groups(&spi_dev->dev,
+							   spi_dev->modalias, 
 							   bme280_data, bme280_attr_groups);
 
-	return PTR_ERR_OR_ZERO(hwmon_dev);
+	if(IS_ERR(bme280_drv_data.dev[bme280_drv_data.total_devices])){
+		dev_err(&spi_dev->dev,"Error in device_register \n");
+		return PTR_ERR(bme280_drv_data.dev[bme280_drv_data.total_devices]);
+	}
+
+	return 0;
 }
 
 struct of_device_id  bme280_device_match[] = 
 {
-	
-{.compatible = "org,bme280"},
+	{.compatible = "org,bme280"},
 	{ }
 };
 

@@ -35,7 +35,7 @@ extern "C" {
  *  @retval != BME280_INTF_RET_SUCCESS -> Failure.
  *
  */
-BME280_INTF_RET_TYPE bme280_spi_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t length, void *intf_ptr);
+BME280_INTF_RET_TYPE bme280_spi_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t length, void *intf_ptr, struct spi_device *spi_dev);
 
 /*!
  *  @brief Function for reading the sensor's registers through I2C bus.
@@ -52,7 +52,7 @@ BME280_INTF_RET_TYPE bme280_spi_read(uint8_t reg_addr, uint8_t *reg_data, uint32
  *  @retval != BME280_INTF_RET_SUCCESS -> Failure.
  *
  */
-BME280_INTF_RET_TYPE bme280_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t length, void *intf_ptr);
+BME280_INTF_RET_TYPE bme280_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t length, void *intf_ptr, struct spi_device *spi_dev);
 
 /*!
  *  @brief Function for writing the sensor's registers through SPI bus.
@@ -70,7 +70,7 @@ BME280_INTF_RET_TYPE bme280_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32
  *  @retval  != BME280_INTF_RET_SUCCESS -> Failure.
  *
  */
-BME280_INTF_RET_TYPE bme280_spi_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t length, void *intf_ptr);
+BME280_INTF_RET_TYPE bme280_spi_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t length, void *intf_ptr, struct spi_device *spi_dev);
 
 /*!
  *  @brief Function for writing the sensor's registers through I2C bus.
@@ -88,7 +88,7 @@ BME280_INTF_RET_TYPE bme280_spi_write(uint8_t reg_addr, const uint8_t *reg_data,
  *  @retval != BME280_INTF_RET_SUCCESS -> Failure.
  *
  */
-BME280_INTF_RET_TYPE bme280_i2c_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t length, void *intf_ptr);
+BME280_INTF_RET_TYPE bme280_i2c_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t length, void *intf_ptr, struct spi_device *spi_dev);
 
 /*!
  *  @brief This function provides the delay for required time (Microsecond) as per the input provided in some of the

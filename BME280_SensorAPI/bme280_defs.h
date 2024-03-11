@@ -7,6 +7,7 @@
 /* header includes */
 #include <linux/types.h>
 #include <linux/kernel.h>
+#include <linux/spi/spi.h>
 
 #define BME280_32BIT_ENABLE
 
@@ -248,7 +249,7 @@ enum bme280_intf {
  * @retval Non zero value -> Fail.
  *
  */
-typedef BME280_INTF_RET_TYPE (*bme280_read_fptr_t)(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, void *intf_ptr);
+typedef BME280_INTF_RET_TYPE (*bme280_read_fptr_t)(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, void *intf_ptr, struct spi_device *spi_dev);
 
 /*!
  * @brief Bus communication function pointer which should be mapped to
@@ -266,7 +267,7 @@ typedef BME280_INTF_RET_TYPE (*bme280_read_fptr_t)(uint8_t reg_addr, uint8_t *re
  *
  */
 typedef BME280_INTF_RET_TYPE (*bme280_write_fptr_t)(uint8_t reg_addr, const uint8_t *reg_data, uint32_t len,
-                                                    void *intf_ptr);
+                                                    void *intf_ptr, struct spi_device *spi_dev);
 
 /*!
  * @brief Delay function pointer which should be mapped to
@@ -419,6 +420,12 @@ struct bme280_settings
  */
 struct bme280_dev
 {
+    /*Variable to store label from device tree*/
+    char label[20];
+
+    /*Linux SPI device*/
+    struct spi_device *spi_dev;
+
     /*! Chip Id */
     uint8_t chip_id;
 
