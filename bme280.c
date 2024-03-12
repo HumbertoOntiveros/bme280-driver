@@ -69,6 +69,14 @@ static const struct attribute_group *bme280_attr_groups[] =
 
 int bme280_remove(struct spi_device *spi_dev)
 {
+	int i;
+	
+	dev_info(&spi_dev->dev,"Remove called\n");
+
+	for(i = 0 ; i < bme280_drv_data.total_devices ; i++){
+		device_unregister(bme280_drv_data.dev[i]);
+	}
+
 	return 0;
 
 }
