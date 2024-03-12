@@ -35,7 +35,22 @@ ssize_t bme280_humidity_show(struct device *dev, struct device_attribute *attr,c
 
 ssize_t bme280_pressure_show(struct device *dev, struct device_attribute *attr,char *buf)
 {
-        return 0;
+	int8_t rslt;
+	uint32_t period;
+	struct bme280_dev *bme280_data = dev_get_drvdata(dev);
+    
+	/* Calculate measurement time in microseconds */
+    rslt = bme280_cal_meas_delay(&period, bme280_data->settings);
+    bme280_error_codes_print_result("bme280_cal_meas_delay", rslt);
+
+    pr_info("\nPressure calculation (Data displayed are compensated values)\n");
+    pr_info("Measurement time : %lu us\n\n", (long unsigned int)period);
+
+    rslt = get_pressure(period, bme280_data);
+    bme280_error_codes_print_result("get_pressure", rslt);
+
+	return sprintf(buf,"%d\n",rslt);
+
 }
 
 ssize_t bme280_temperature_show(struct device *dev, struct device_attribute *attr,char *buf)
@@ -185,8 +200,6 @@ static int bme280_probe(struct spi_device *spi_dev)
 
     rslt = bme280_set_sensor_settings(BME280_SEL_ALL_SETTINGS, settings, bme280_data);
     bme280_error_codes_print_result("bme280_set_sensor_settings", rslt);
-
-
 
 	bme280_drv_data.dev[bme280_drv_data.total_devices] = devm_hwmon_device_register_with_groups(&spi_dev->dev,
 							   spi_dev->modalias, 
