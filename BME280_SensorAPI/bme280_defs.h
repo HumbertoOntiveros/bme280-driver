@@ -457,6 +457,9 @@ struct bme280_dev
 
     /*! Trim data */
     struct bme280_calib_data calib_data;
+
+    /*Pointer to settings*/
+    struct bme280_settings *settings;
 };
 
 #endif /* _BME280_DEFS_H */

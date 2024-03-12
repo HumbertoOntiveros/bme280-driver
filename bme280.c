@@ -86,14 +86,15 @@ static int bme280_probe(struct spi_device *spi_dev)
 	const char *name;
 	int ret;
 
-        int8_t rslt;
-        struct bme280_dev *bme280_data;
+    int8_t rslt;
+    struct bme280_dev *bme280_data;
 
 	/*parent device node*/
  	struct device_node *parent = spi_dev->dev.of_node;
+	struct bme280_settings *settings;
 
-        bme280_drv_data.total_devices++;
-        dev_info(&spi_dev->dev,"Driver's total devices  = %d\n",bme280_drv_data.total_devices);
+    bme280_drv_data.total_devices++;
+    dev_info(&spi_dev->dev,"Driver's total devices  = %d\n",bme280_drv_data.total_devices);
 
 	bme280_drv_data.dev = devm_kzalloc(&spi_dev->dev, sizeof(struct device *) * bme280_drv_data.total_devices , GFP_KERNEL);
 
@@ -104,6 +105,18 @@ static int bme280_probe(struct spi_device *spi_dev)
 		return -ENOMEM;
 
 	};
+
+	/*Allocate memory for bme280 settings*/
+	settings = devm_kzalloc(&spi_dev->dev, sizeof(*settings), GFP_KERNEL);
+	if(!settings){
+
+		dev_err(&spi_dev->dev, "Cannot allocate memory\n");
+		return -ENOMEM;		
+
+	}
+
+	/*Store BME280 settings in BM280 privete data*/
+	bme280_data->settings= settings;  
 
 	if(of_property_read_string(parent,"label",&name) )
 	{
@@ -148,11 +161,32 @@ static int bme280_probe(struct spi_device *spi_dev)
 	* For SPI :  BME280_SPI_INTF
 	*/
 
-	rslt = bme280_interface_selection(bme280_data, BME280_I2C_INTF);
+	rslt = bme280_interface_selection(bme280_data, BME280_SPI_INTF);
 	bme280_error_codes_print_result("bme280_interface_selection", rslt);
 
 	rslt = bme280_init(bme280_data);
 	bme280_error_codes_print_result("bme280_init", rslt);
+
+	/* Always read the current settings before writing, especially when all the configuration is not modified */
+    rslt = bme280_get_sensor_settings(settings, bme280_data);
+    bme280_error_codes_print_result("bme280_get_sensor_settings", rslt);
+
+	/* Configuring the over-sampling rate, filter coefficient and standby time */
+    /* Overwrite the desired settings */
+    settings->filter = BME280_FILTER_COEFF_2;
+
+    /* Over-sampling rate for humidity, temperature and pressure */
+    settings->osr_h = BME280_OVERSAMPLING_1X;
+    settings->osr_p = BME280_OVERSAMPLING_1X;
+    settings->osr_t = BME280_OVERSAMPLING_1X;
+
+    /* Setting the standby time */
+    settings->standby_time = BME280_STANDBY_TIME_0_5_MS;
+
+    rslt = bme280_set_sensor_settings(BME280_SEL_ALL_SETTINGS, settings, bme280_data);
+    bme280_error_codes_print_result("bme280_set_sensor_settings", rslt);
+
+
 
 	bme280_drv_data.dev[bme280_drv_data.total_devices] = devm_hwmon_device_register_with_groups(&spi_dev->dev,
 							   spi_dev->modalias, 
