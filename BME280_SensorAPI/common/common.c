@@ -13,6 +13,7 @@
 /*!                               Macros                                      */
 
 #define BME280_SHUTTLE_ID  UINT8_C(0x33)
+#define SAMPLE_COUNT  UINT8_C(50)
 
 /******************************************************************************/
 /*!                Static variable definition                                 */
@@ -207,3 +208,122 @@ int8_t bme280_interface_selection(struct bme280_dev *dev, uint8_t intf)
     return rslt;
 }
 
+/*!
+ *  @brief This internal API is used to get compensated humidity data.
+ */
+int8_t get_humidity(uint32_t period, struct bme280_dev *dev)
+{
+    int8_t rslt = BME280_E_NULL_PTR;
+    int8_t idx = 0;
+    uint8_t status_reg;
+    struct bme280_data comp_data;
+
+    while (idx < SAMPLE_COUNT)
+    {
+        rslt = bme280_get_regs(BME280_REG_STATUS, &status_reg, 1, dev);
+        bme280_error_codes_print_result("bme280_get_regs", rslt);
+
+        if (status_reg & BME280_STATUS_MEAS_DONE)
+        {
+            /* Measurement time delay given to read sample */
+            dev->delay_us(period, dev->intf_ptr);
+
+            /* Read compensated data */
+            rslt = bme280_get_sensor_data(BME280_HUM, &comp_data, dev);
+            bme280_error_codes_print_result("bme280_get_sensor_data", rslt);
+
+#ifndef BME280_DOUBLE_ENABLE
+            comp_data.humidity = comp_data.humidity / 1000;
+#endif
+
+#ifdef BME280_DOUBLE_ENABLE
+            pr_info("Humidity[%d]:   %lf %%RH\n", idx, comp_data.humidity);
+#else
+            pr_info("Humidity[%d]:   %lu %%RH\n", idx, (long unsigned int)comp_data.humidity);
+#endif
+            idx++;
+        }
+    }
+
+    return rslt;
+}
+
+/*!
+ *  @brief This internal API is used to get compensated pressure data.
+ */
+int8_t get_pressure(uint32_t period, struct bme280_dev *dev)
+{
+    int8_t rslt = BME280_E_NULL_PTR;
+    int8_t idx = 0;
+    uint8_t status_reg;
+    struct bme280_data comp_data;
+
+    while (idx < SAMPLE_COUNT)
+    {
+        rslt = bme280_get_regs(BME280_REG_STATUS, &status_reg, 1, dev);
+        bme280_error_codes_print_result("bme280_get_regs", rslt);
+
+        if (status_reg & BME280_STATUS_MEAS_DONE)
+        {
+            /* Measurement time delay given to read sample */
+            dev->delay_us(period, dev->intf_ptr);
+
+            /* Read compensated data */
+            rslt = bme280_get_sensor_data(BME280_PRESS, &comp_data, dev);
+            bme280_error_codes_print_result("bme280_get_sensor_data", rslt);
+
+#ifdef BME280_64BIT_ENABLE
+            comp_data.pressure = comp_data.pressure / 100;
+#endif
+
+#ifdef BME280_DOUBLE_ENABLE
+            pr_info("Pressure[%d]:  %lf Pa\n", idx, comp_data.pressure);
+#else
+            pr_info("Pressure[%d]:   %lu Pa\n", idx, (long unsigned int)comp_data.pressure);
+#endif
+            idx++;
+        }
+    }
+
+    return rslt;
+}
+
+/*!
+ *  @brief This internal API is used to get compensated temperature data.
+ */
+int8_t get_temperature(uint32_t period, struct bme280_dev *dev)
+{
+    int8_t rslt = BME280_E_NULL_PTR;
+    int8_t idx = 0;
+    uint8_t status_reg;
+    struct bme280_data comp_data;
+
+    while (idx < SAMPLE_COUNT)
+    {
+        rslt = bme280_get_regs(BME280_REG_STATUS, &status_reg, 1, dev);
+        bme280_error_codes_print_result("bme280_get_regs", rslt);
+
+        if (status_reg & BME280_STATUS_MEAS_DONE)
+        {
+            /* Measurement time delay given to read sample */
+            dev->delay_us(period, dev->intf_ptr);
+
+            /* Read compensated data */
+            rslt = bme280_get_sensor_data(BME280_TEMP, &comp_data, dev);
+            bme280_error_codes_print_result("bme280_get_sensor_data", rslt);
+
+#ifndef BME280_DOUBLE_ENABLE
+            comp_data.temperature = comp_data.temperature / 100;
+#endif
+
+#ifdef BME280_DOUBLE_ENABLE
+            pr_info("Temperature[%d]:   %lf deg C\n", idx, comp_data.temperature);
+#else
+            pr_info("Temperature[%d]:   %ld deg C\n", idx, (long int)comp_data.temperature);
+#endif
+            idx++;
+        }
+    }
+
+    return rslt;
+}

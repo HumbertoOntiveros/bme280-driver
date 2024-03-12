@@ -133,6 +133,36 @@ void bme280_error_codes_print_result(const char api_name[], int8_t rslt);
  */
 void bme280_coines_deinit(void);
 
+/*!
+ *  @brief This internal API is used to get compensated humidity data.
+ *
+ *  @param[in] period   : Contains the delay in microseconds.
+ *  @param[in] dev      : Structure instance of bme280_dev.
+ *
+ *  @return Status of execution.
+ */
+int8_t get_humidity(uint32_t period, struct bme280_dev *dev);
+
+/*!
+ *  @brief This internal API is used to get compensated pressure data.
+ *
+ *  @param[in] period   : Contains the delay in microseconds.
+ *  @param[in] dev      : Structure instance of bme280_dev.
+ *
+ *  @return Status of execution.
+ */
+int8_t get_pressure(uint32_t period, struct bme280_dev *dev);
+
+/*!
+ *  @brief This internal API is used to get compensated temperature data.
+ *
+ *  @param[in] period   : Contains the delay in microseconds.
+ *  @param[in] dev      : Structure instance of bme280_dev.
+ *
+ *  @return Status of execution.
+ */
+int8_t get_temperature(uint32_t period, struct bme280_dev *dev);
+
 #ifdef __cplusplus
 }
 #endif /* End of CPP guard */
