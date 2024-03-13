@@ -30,12 +30,28 @@ struct bme280drv_data bme280_drv_data;
 
 ssize_t bme280_humidity_show(struct device *dev, struct device_attribute *attr,char *buf)
 {
-	return 0;
+	int8_t rslt;
+	uint32_t humidity_value;
+	uint32_t period;
+	struct bme280_dev *bme280_data = dev_get_drvdata(dev);
+    
+	/* Calculate measurement time in microseconds */
+    rslt = bme280_cal_meas_delay(&period, bme280_data->settings);
+    bme280_error_codes_print_result("bme280_cal_meas_delay", rslt);
+
+    pr_info("\nHumidity calculation (Data displayed are compensated values)\n");
+    pr_info("Measurement time : %lu us\n\n", (long unsigned int)period);
+
+    humidity_value = get_pressure(period, bme280_data);
+    pr_info("BME280 humidity value read: %d\n", humidity_value);
+
+	return sprintf(buf,"%d\n",humidity_value);
 }
 
 ssize_t bme280_pressure_show(struct device *dev, struct device_attribute *attr,char *buf)
 {
 	int8_t rslt;
+	uint32_t pressure_value;
 	uint32_t period;
 	struct bme280_dev *bme280_data = dev_get_drvdata(dev);
     
@@ -46,16 +62,32 @@ ssize_t bme280_pressure_show(struct device *dev, struct device_attribute *attr,c
     pr_info("\nPressure calculation (Data displayed are compensated values)\n");
     pr_info("Measurement time : %lu us\n\n", (long unsigned int)period);
 
-    rslt = get_pressure(period, bme280_data);
-    bme280_error_codes_print_result("get_pressure", rslt);
+    pressure_value = get_pressure(period, bme280_data);
+    pr_info("BME280 pressure value read: %d\n", pressure_value);
 
-	return sprintf(buf,"%d\n",rslt);
+	return sprintf(buf,"%d\n",pressure_value);
 
 }
 
 ssize_t bme280_temperature_show(struct device *dev, struct device_attribute *attr,char *buf)
 {
-        return 0;
+	int8_t rslt;
+	uint32_t temperature_value;
+	uint32_t period;
+	struct bme280_dev *bme280_data = dev_get_drvdata(dev);
+    
+	/* Calculate measurement time in microseconds */
+    rslt = bme280_cal_meas_delay(&period, bme280_data->settings);
+    bme280_error_codes_print_result("bme280_cal_meas_delay", rslt);
+
+    pr_info("\nTemperature calculation (Data displayed are compensated values)\n");
+    pr_info("Measurement time : %lu us\n\n", (long unsigned int)period);
+
+    temperature_value = get_pressure(period, bme280_data);
+    pr_info("BME280 temperature value read: %d\n", temperature_value);
+	
+	return sprintf(buf,"%d\n",temperature_value);
+
 }
 
 static DEVICE_ATTR_RO(bme280_humidity);
