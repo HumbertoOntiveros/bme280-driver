@@ -211,7 +211,12 @@ int8_t bme280_interface_selection(struct bme280_dev *dev, uint8_t intf)
 /*!
  *  @brief This internal API is used to get compensated humidity data.
  */
-int8_t get_humidity(uint32_t period, struct bme280_dev *dev)
+
+#ifdef BME280_DOUBLE_ENABLE
+    double get_humidity(uint32_t period, struct bme280_dev *dev)
+#else
+    uint32_t get_humidity(uint32_t period, struct bme280_dev *dev)
+#endif
 {
     int8_t rslt = BME280_E_NULL_PTR;
     int8_t idx = 0;
@@ -245,13 +250,17 @@ int8_t get_humidity(uint32_t period, struct bme280_dev *dev)
         }
     }
 
-    return rslt;
+    return comp_data.humidity;
 }
 
 /*!
  *  @brief This internal API is used to get compensated pressure data.
  */
-int8_t get_pressure(uint32_t period, struct bme280_dev *dev)
+#ifdef BME280_DOUBLE_ENABLE
+    double get_pressure(uint32_t period, struct bme280_dev *dev)
+#else
+    uint32_t get_pressure(uint32_t period, struct bme280_dev *dev)
+#endif
 {
     int8_t rslt = BME280_E_NULL_PTR;
     int8_t idx = 0;
@@ -285,13 +294,17 @@ int8_t get_pressure(uint32_t period, struct bme280_dev *dev)
         }
     }
 
-    return rslt;
+    return comp_data.pressure;
 }
 
 /*!
  *  @brief This internal API is used to get compensated temperature data.
  */
-int8_t get_temperature(uint32_t period, struct bme280_dev *dev)
+#ifdef BME280_DOUBLE_ENABLE
+    double get_temperature(uint32_t period, struct bme280_dev *dev)
+#else
+    uint32_t get_temperature(uint32_t period, struct bme280_dev *dev)
+#endif
 {
     int8_t rslt = BME280_E_NULL_PTR;
     int8_t idx = 0;
@@ -325,5 +338,5 @@ int8_t get_temperature(uint32_t period, struct bme280_dev *dev)
         }
     }
 
-    return rslt;
+    return comp_data.temperature;
 }

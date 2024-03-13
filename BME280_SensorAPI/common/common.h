@@ -141,7 +141,12 @@ void bme280_coines_deinit(void);
  *
  *  @return Status of execution.
  */
-int8_t get_humidity(uint32_t period, struct bme280_dev *dev);
+#ifdef BME280_DOUBLE_ENABLE
+    double get_humidity(uint32_t period, struct bme280_dev *dev);
+#else
+    uint32_t get_humidity(uint32_t period, struct bme280_dev *dev);
+#endif
+
 
 /*!
  *  @brief This internal API is used to get compensated pressure data.
@@ -151,7 +156,11 @@ int8_t get_humidity(uint32_t period, struct bme280_dev *dev);
  *
  *  @return Status of execution.
  */
-int8_t get_pressure(uint32_t period, struct bme280_dev *dev);
+#ifdef BME280_DOUBLE_ENABLE
+    double get_pressure(uint32_t period, struct bme280_dev *dev);
+#else
+    uint32_t get_pressure(uint32_t period, struct bme280_dev *dev);
+#endif
 
 /*!
  *  @brief This internal API is used to get compensated temperature data.
@@ -161,7 +170,11 @@ int8_t get_pressure(uint32_t period, struct bme280_dev *dev);
  *
  *  @return Status of execution.
  */
-int8_t get_temperature(uint32_t period, struct bme280_dev *dev);
+#ifdef BME280_DOUBLE_ENABLE
+    double get_temperature(uint32_t period, struct bme280_dev *dev);
+#else
+    uint32_t get_temperature(uint32_t period, struct bme280_dev *dev);
+#endif
 
 #ifdef __cplusplus
 }
