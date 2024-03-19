@@ -14,6 +14,7 @@
 #include "BME280_SensorAPI/bme280.h"
 #include "BME280_SensorAPI/common/common.h"
 
+#define PRINT_INFO_DEBUG
 
 #undef pr_fmt
 #define pr_fmt(fmt) "%s : " fmt,__func__
@@ -22,8 +23,6 @@
 struct bme280drv_data
 {
 	int total_devices;
-	struct device **dev;
-
 };
 
 struct bme280drv_data bme280_drv_data;
@@ -114,26 +113,13 @@ static const struct attribute_group *bme280_attr_groups[] =
 
 };
 
-int bme280_remove(struct spi_device *spi_dev)
-{
-	int i;
-	
-	dev_info(&spi_dev->dev,"Remove called\n");
-
-	for(i = 0 ; i < bme280_drv_data.total_devices ; i++){
-		device_unregister(bme280_drv_data.dev[i]);
-	}
-
-	return 0;
-
-}
 
 static int bme280_probe(struct spi_device *spi_dev)
 {
-	const char *name;
 	int ret;
-
     int8_t rslt;
+	const char *name;
+	struct device *hwmon_dev;
     struct bme280_dev *bme280_data;
 
 	/*parent device node*/
@@ -141,9 +127,8 @@ static int bme280_probe(struct spi_device *spi_dev)
 	struct bme280_settings *settings;
 
     bme280_drv_data.total_devices++;
-    dev_info(&spi_dev->dev,"Driver's total devices  = %d\n",bme280_drv_data.total_devices);
+    pr_info("Driver's total devices  = %d\n",bme280_drv_data.total_devices);
 
-	bme280_drv_data.dev = devm_kzalloc(&spi_dev->dev, sizeof(struct device *) * bme280_drv_data.total_devices , GFP_KERNEL);
 
 	bme280_data = devm_kzalloc(&spi_dev->dev, sizeof(*bme280_data), GFP_KERNEL);
 	if(!bme280_data){
@@ -180,6 +165,7 @@ static int bme280_probe(struct spi_device *spi_dev)
 
 	bme280_data->spi_dev = spi_dev;
 	spi_dev->bits_per_word = 8;
+	spi_dev->mode = SPI_MODE_3;
 
 	dev_info(&spi_dev->dev,"SPI Bus configuration\n");
         dev_info(&spi_dev->dev,"	max_speed_hz: %u\n", spi_dev->max_speed_hz);
@@ -196,13 +182,6 @@ static int bme280_probe(struct spi_device *spi_dev)
 
 	}
 
-	/*
-	* make some  init here using  the bme280 api 
-	* to condigure the sensor
-	*
-	*/
-
-
 	/* Interface selection is to be updated as parameter
 	* For I2C :  BME280_I2C_INTF
 	* For SPI :  BME280_SPI_INTF
@@ -215,8 +194,8 @@ static int bme280_probe(struct spi_device *spi_dev)
 	bme280_error_codes_print_result("bme280_init", rslt);
 
 	/* Always read the current settings before writing, especially when all the configuration is not modified */
-    rslt = bme280_get_sensor_settings(settings, bme280_data);
-    bme280_error_codes_print_result("bme280_get_sensor_settings", rslt);
+    //rslt = bme280_get_sensor_settings(settings, bme280_data);
+    //bme280_error_codes_print_result("bme280_get_sensor_settings", rslt);
 
 	/* Configuring the over-sampling rate, filter coefficient and standby time */
     /* Overwrite the desired settings */
@@ -230,16 +209,16 @@ static int bme280_probe(struct spi_device *spi_dev)
     /* Setting the standby time */
     settings->standby_time = BME280_STANDBY_TIME_0_5_MS;
 
-    rslt = bme280_set_sensor_settings(BME280_SEL_ALL_SETTINGS, settings, bme280_data);
-    bme280_error_codes_print_result("bme280_set_sensor_settings", rslt);
+    //rslt = bme280_set_sensor_settings(BME280_SEL_ALL_SETTINGS, settings, bme280_data);
+    //bme280_error_codes_print_result("bme280_set_sensor_settings", rslt);
 
-	bme280_drv_data.dev[bme280_drv_data.total_devices] = devm_hwmon_device_register_with_groups(&spi_dev->dev,
+	hwmon_dev = devm_hwmon_device_register_with_groups(&spi_dev->dev,
 							   spi_dev->modalias, 
 							   bme280_data, bme280_attr_groups);
 
-	if(IS_ERR(bme280_drv_data.dev[bme280_drv_data.total_devices])){
+	if(IS_ERR(hwmon_dev)){
 		dev_err(&spi_dev->dev,"Error in device_register \n");
-		return PTR_ERR(bme280_drv_data.dev[bme280_drv_data.total_devices]);
+		return PTR_ERR(hwmon_dev);
 	}
 
 	return 0;
@@ -247,17 +226,16 @@ static int bme280_probe(struct spi_device *spi_dev)
 
 struct of_device_id  bme280_device_match[] = 
 {
-	{.compatible = "org,bme280"},
+	{.compatible = "org,bme280sensor"},
 	{ }
 };
 
 static struct spi_driver bme280_driver = {
 	.driver = {
-		.name = "bme280",
+		.name = "bme280sensor",
 		.of_match_table = of_match_ptr(bme280_device_match)
 	},
-	.probe = bme280_probe,
-	.remove = bme280_remove
+	.probe = bme280_probe
 };
 
 module_spi_driver(bme280_driver);

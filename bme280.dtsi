@@ -3,13 +3,13 @@
 	status = "okay";
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_spi0>;
-	cs-gpios = <&gpio1 6 0>, <&gpio1 7 0>;
+	cs-gpios = <&gpio0 6 0>, <&gpio0 7 0>;
 
 	bme280_0: bme280@0{
 
-		compatible = "org,bme280-sensor";
+		compatible = "org,bme280sensor";
 		reg = <0>;
-		spi-max-frequency = <10000000>;
+		spi-max-frequency = <2000000>;
 		label = "SPI0:bme280-0";
 		spi-cpol = <0>;
 		spi-cpha = <0>;
@@ -18,9 +18,9 @@
 
 	bme280_1: bme280@1{
 
-		compatible = "org,bme280-sensor";
+		compatible = "org,bme280sensor";
 		reg = <1>;
-		spi-max-frequency = <10000000>;
+		spi-max-frequency = <2000000>;
 		label = "SPI0:bme280-1";
 		spi-cpol = <0>;
 		spi-cpha = <0>;
@@ -32,11 +32,10 @@
 	
 	pinctrl_spi0: spi0_pins {
 		pinctrl-single,pins = < 
-			AM33XX_PADCONF(AM335X_PIN_SPI0_SCLK,PIN_OUTPUT_PULLUP,MUX_MODE0) 
-			AM33XX_PADCONF(AM335X_PIN_SPI0_D0,PIN_INPUT_PULLUP,MUX_MODE0   ) 
-			AM33XX_PADCONF(AM335X_PIN_SPI0_D1,PIN_OUTPUT_PULLUP,MUX_MODE0  ) 
-			AM33XX_PADCONF(AM335X_PIN_SPI0_CS0,PIN_OUTPUT_PULLUP,MUX_MODE0 ) 
-			/*AM33XX_PADCONF(AM335X_PIN_SPI0_CS1,PIN_OUTPUT_PULLUP,MUX_MODE0 )*/
+			AM33XX_PADCONF(AM335X_PIN_SPI0_SCLK,PIN_INPUT_PULLUP,MUX_MODE0) 
+			AM33XX_PADCONF(AM335X_PIN_SPI0_D0,PIN_INPUT_PULLUP,MUX_MODE0) 
+			AM33XX_PADCONF(AM335X_PIN_SPI0_D1,PIN_OUTPUT_PULLUP,MUX_MODE0) 
+			AM33XX_PADCONF(AM335X_PIN_SPI0_CS0,PIN_OUTPUT_PULLUP,MUX_MODE0) 
 		>;
 
 	};

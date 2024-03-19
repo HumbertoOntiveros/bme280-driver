@@ -8,6 +8,12 @@
 #include "common.h"
 #include <linux/delay.h>
 #include <linux/spi/spi.h>
+#include <linux/printk.h>
+
+
+
+#define PRINT_INFO_DEBUG
+#undef  PRINT_INFO_DEBUG
 
 /******************************************************************************/
 /*!                               Macros                                      */
@@ -46,26 +52,61 @@ BME280_INTF_RET_TYPE bme280_i2c_write(uint8_t reg_addr, const uint8_t *reg_data,
 BME280_INTF_RET_TYPE bme280_spi_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t length, void *intf_ptr, struct spi_device *spi_dev)
 {
 	//dev_addr = *(uint8_t*)intf_ptr;
-
+    int i, j;
 	struct spi_message message;
 	struct spi_transfer transfer;
 
 	memset(&transfer, 0, sizeof(struct spi_transfer));
-	transfer.tx_buf = kmalloc(length, GFP_KERNEL);
-	transfer.rx_buf = reg_data;
-	transfer.len = length;
+	transfer.tx_buf = kmalloc(length+1, GFP_KERNEL);
+	transfer.rx_buf = kmalloc(length+1, GFP_KERNEL);
+	transfer.len = length + 1;
 
-	// Configura el registro de dirección para la lectura
+	/*
+    *giving a format to tx_buff so trash data is not trasmited into the MOSI line,
+    *                 0xFF is given to keep the line clean.
+    */
+    memset((void *)transfer.tx_buf, 0xFF, length + 1);
 	*((uint8_t *)transfer.tx_buf) = reg_addr | 0x80;
 
+    
 	spi_message_init(&message);
 	spi_message_add_tail(&transfer, &message);
 
 	if (spi_sync(spi_dev, &message) == 0) {
-		kfree(transfer.tx_buf);
+        
+        #ifdef PRINT_INFO_DEBUG
+        /*
+        *some debug pr_info();
+        */
+		pr_info("--------Start of Transaction--------\n");
+        #endif
+
+        for(i = 0, j = 1; i < length; i++, j++){
+
+            reg_data[i] = *((uint8_t *)transfer.rx_buf+j);
+
+            #ifdef PRINT_INFO_DEBUG
+            /*
+            *some debug pr_info();
+            */
+            pr_info("   reg_data[%d] = %02X\n", i, reg_data[i]);
+            #endif
+        }
+
+        #ifdef PRINT_INFO_DEBUG
+        /*
+        *some debug pr_info();
+        */
+		pr_info("--------End of Transaction--------\n");
+        #endif
+
+        kfree(transfer.tx_buf);
+        kfree(transfer.rx_buf);
+
 		return 0;
 	} else {
 		kfree(transfer.tx_buf);
+        kfree(transfer.rx_buf);
 		return -EIO;
 	}
 }
